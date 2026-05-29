@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Academic Assistant</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: radial-gradient(circle at top right, #1e1b4b 0%, #090d16 60%, #020617 100%);
+}
+
+.premium-glass {
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.07);
+}
+</style>
+</head>
+
+<body class="text-slate-200 min-h-screen flex">
+
+<!-- SIDEBAR -->
+<aside class="w-80 premium-glass p-6 hidden lg:flex flex-col justify-between">
+    <div>
+        <h1 class="text-xl font-bold mb-6">📚 Academic AI</h1>
+
+        <div class="text-sm text-slate-400 space-y-2">
+            <div>📁 Files: <span id="uploadCount">0</span></div>
+            <div>📄 Active Doc: <span id="docId">None</span></div>
+        </div>
+    </div>
+
+    <div class="text-xs text-slate-500">Smart Academic Assistant</div>
+</aside>
+
+<!-- MAIN -->
+<main class="flex-1 p-6 flex flex-col gap-6 overflow-y-auto">
+
+<!-- UPLOAD -->
+<section class="premium-glass p-6 rounded-xl">
+    <h2 class="font-bold mb-3 text-indigo-400">Upload Document</h2>
+
+    <input type="file" id="fileInput" class="mb-3 text-sm">
+
+    <button onclick="uploadFile()"
+        class="bg-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-500">
+        Upload
+    </button>
+
+    <p id="uploadStatus" class="text-sm mt-3 text-slate-400"></p>
+</section>
+
+<!-- CHAT -->
+<section class="premium-glass p-6 rounded-xl flex flex-col h-[500px]">
+
+    <div id="chatBox" class="flex-1 overflow-y-auto space-y-3 mb-4"></div>
+
+    <div class="flex gap-3">
+        <input id="questionInput"
+            class="flex-1 p-3 rounded-lg bg-slate-900 text-white border border-slate-700"
+            placeholder="Ask about your document..." />
+
+        <button onclick="askAI()"
+            class="bg-purple-600 px-5 rounded-lg hover:bg-purple-500">
+            Send
+        </button>
+    </div>
+
+</section>
+
+</main>
+
+<script>
+
+const API = "http://127.0.0.1:5000";
+
+let currentDocId = null;
+
+/* ======================
+   UPLOAD FILE
+====================== */
+async function uploadFile() {
+
+    const file = document.getElementById("fileInput").files[0];
+
+    if (!file) return alert("Select a file first");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    document.getElementById("uploadStatus").innerText = "Uploading...";
+
+    try {
+        const res = await fetch(`${API}/upload`, {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+        console.log("RAW API:", data);
+ 
+        alert(JSON.stringify(data,null,2));
+        if (data.doc_id) {
+            currentDocId = data.doc_id;
+
+            document.getElementById("docId").innerText = currentDocId;
+            document.getElementById("uploadCount").innerText =
+                parseInt(document.getElementById("uploadCount").innerText) + 1;
+
+            document.getElementById("uploadStatus").innerText =
+                "Upload successful ✔ ID: " + currentDocId;
+
+            addMessage("System", "Document uploaded successfully");
+        } else {
+            document.getElementById("uploadStatus").innerText =
+                "Upload failed ❌";
+        }
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("uploadStatus").innerText =
+            "Error uploading file";
+    }
+}
+
+/* ======================
+   ASK AI
+====================== */
+async function askAI() {
+
+    const input = document.getElementById("questionInput");
+    const question = input.value.trim();
+
+    if (!question) return;
+
+    addMessage("You", question);
+    input.value = "";
+
+    try {
+        const res = await fetch(`${API}/ask`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                question: question,
+                doc_id: currentDocId || "1"
+            })
+        });
+
+        const data = await res.json();
+
+        console.log("BACKEND RESPONSE:", data);
+
+        const answer =
+            data.response ??
+            data.error ??
+            "No response from server";
+
+        addMessage("AI", answer);
+
+    } catch (err) {
+        console.error(err);
+        addMessage("AI", "Backend connection error");
+    }
+}
+
+/* ======================
+   CHAT UI
+====================== */
+function addMessage(sender, text) {
+
+    const box = document.getElementById("chatBox");
+
+    const div = document.createElement("div");
+
+    div.className =
+        sender === "AI"
+            ? "bg-indigo-600/20 p-3 rounded-xl"
+            : sender === "System"
+            ? "bg-green-600/20 p-3 rounded-xl"
+            : "bg-slate-800/40 p-3 rounded-xl";
+
+    div.innerHTML = `<b>${sender}:</b> ${text}`;
+
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    if "file" not in request.files:
+        return jsonify({"error": "no file provided"}), 400
+
+    file = request.files["file"]
+
+    path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(path)
+
+    # 1) extract text
+    text = extract_text(path)
+
+    # 2) chunking (IMPORTANT)
+    chunks = chunk_text(text)
+
+    # 3) add to vector DB (CRITICAL for RAG)
+    store.add_text(chunks)
+
+    # 4) persist metadata (NOT full text needed anymore)
+    doc_id = str(len(docs_store) + 1)
+
+    docs_store[doc_id] = {
+        "filename": file.filename,
+        "chunks_count": len(chunks)
+    }
+
+    save_store(docs_store)
+
+    return jsonify({
+        "message": "uploaded successfully",
+        "doc_id": doc_id,
+        "chunks": len(chunks)
+    })

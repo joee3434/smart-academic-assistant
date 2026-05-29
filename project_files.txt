@@ -1,0 +1,26 @@
+./frontend/app.py
+./frontend/index.html
+./frontend/frontend.log
+./frontend/requirements.txt
+./frontend.log
+./project_files.txt
+./backend.log
+./backend/services/pptx_processor.py
+./backend/services/pdf_processor.py
+./backend/services/ollama_service.py
+./backend/services/chat_service.py
+./backend/app.py
+./backend/index.html
+./backend/upload
+./backend/ask
+./backend/uploads/AI programming language_part 1.pdf.pdf
+./backend/uploads/lecture1_part2.pdf
+./backend/backend.log
+./backend/routes/health.py
+./backend/routes/chat.py
+./backend/test_connection.py
+./backend/db/connection.py
+./backend/chat_service.py
+./backend/ollama.log
+./backend/To
+./ollama.log

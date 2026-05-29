@@ -1,0 +1,45 @@
+@app.route("/ask", methods=["POST"])
+def ask():
+    data = request.json
+    question = data.get("question")
+
+    if not question:
+        return jsonify({"error": "missing question"}), 400
+
+    # 🔥 1. semantic retrieval (FAISS)
+    chunks = store.search(question, k=5)
+
+    if not chunks:
+        return jsonify({
+            "error": "no relevant context found",
+            "available_docs": list(docs_store.keys())
+        }), 404
+
+    # 🔥 2. build context from best chunks
+    context = "\n".join(chunks)
+
+    # 🔥 3. prompt engineering (RAG style)
+    prompt = f"""
+You are an expert academic assistant.
+
+Use ONLY the context below to answer.
+
+Context:
+{context}
+
+Question:
+{question}
+
+If the answer is not in the context, say you don't know.
+
+Answer clearly and concisely:
+"""
+
+    # 🔥 4. LLM call
+    response = call_llm(prompt)
+
+    return jsonify({
+        "question": question,
+        "response": response,
+        "chunks_used": len(chunks)
+    })

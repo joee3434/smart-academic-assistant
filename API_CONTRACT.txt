@@ -1,0 +1,15 @@
+
+API CONTRACT:
+
+POST /upload
+→ returns: { doc_id }
+
+POST /ask
+body: { doc_id, question }
+→ returns: { response }
+
+POST /summarize
+→ returns: { summary }
+
+POST /quiz
+→ returns: { quiz }

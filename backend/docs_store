@@ -1,0 +1,18 @@
+import json
+
+STORE_FILE = "docs_store.json"
+
+
+def load_store():
+    if os.path.exists(STORE_FILE):
+        with open(STORE_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def save_store(store):
+    with open(STORE_FILE, "w") as f:
+        json.dump(store, f)
+
+
+docs_store = load_store()
